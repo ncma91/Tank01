@@ -1,0 +1,18 @@
+# tank01_mower/mission_node – see docs/08_maehplanung_missionen.md
+mission_node:
+  ros__parameters:
+    map_frame: map
+    cut_width: 1.0               # [m]
+    overlap: 0.10
+    headland_passes: 2
+    swath_angle_deg: -1.0        # < 0 = automatic (longest field edge)
+    min_swath_length: 2.0        # [m]
+    waypoint_spacing: 2.0        # [m] along swaths
+    route_waypoint_spacing: 20.0 # [m] along transit routes
+    mow_speed: 1.0               # [m/s]
+    blade_rpm: 2400.0
+    cut_height: 0.07             # [m]
+    max_poses_per_goal: 60
+    battery_capacity_wh: 9200.0  # usable energy
+    energy_wh_per_m: 0.35        # transit consumption estimate, refine from logs
+    resume_delay: 3.0            # [s] safety must be clear this long before resuming

@@ -1,0 +1,26 @@
+# tank01_safety/safety_supervisor – see docs/09_sicherheitskonzept.md
+safety_supervisor:
+  ros__parameters:
+    rate: 50.0
+    cmd_timeout: 0.5
+    require_perception: true     # false only for tests without the person detector!
+    geofence_file: ''            # set by bringup.launch.py (argument geofence:=...)
+    datum: [0.0, 0.0, 0.0]       # [lat, lon, alt]; zeros = use datum from the GeoJSON
+    limits:
+      max_speed: 1.4             # [m/s] mowing / manual
+      max_speed_transit: 2.2     # [m/s] autonomous transit with blade off
+      max_yaw_rate: 1.0          # [rad/s]
+      slow_speed: 0.5            # [m/s]
+      max_roll_deg: 25.0
+      max_pitch_deg: 30.0
+      warn_roll_deg: 18.0
+      warn_pitch_deg: 22.0
+      person_slow_m: 10.0
+      person_blade_off_m: 5.0
+      person_stop_m: 3.0
+      max_pos_std_mowing: 0.10   # [m] RTK fix needed for mowing
+      max_pos_std_driving: 1.0
+      max_pos_std_slow: 0.4
+      geofence_margin: 0.5       # [m]
+      geofence_lookahead: 1.5    # [s]
+      stale_timeout: 0.5         # [s]

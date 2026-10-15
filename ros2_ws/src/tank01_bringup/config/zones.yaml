@@ -1,0 +1,5 @@
+# Operating zones for areas larger than ~10 km (docs/07, §6). Not used by default.
+zones:
+  hof:
+    datum: [47.26010, 11.39210, 600.0]
+    radius_m: 3000

@@ -1,0 +1,21 @@
+# twist_mux – priorities, see docs/06_software_architektur.md §5
+twist_mux:
+  ros__parameters:
+    topics:
+      teleop:
+        topic: cmd_vel_teleop
+        timeout: 0.5
+        priority: 100
+      web:
+        topic: cmd_vel_web
+        timeout: 0.5
+        priority: 90
+      navigation:
+        topic: cmd_vel_nav
+        timeout: 0.5
+        priority: 10
+    locks:
+      pause:
+        topic: pause
+        timeout: 0.0
+        priority: 255

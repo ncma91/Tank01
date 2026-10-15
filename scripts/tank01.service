@@ -1,0 +1,21 @@
+# systemd unit template – installed by setup_jetson.sh (@USER@/@REPO@ are replaced)
+[Unit]
+Description=Tank01 ROS 2 bringup
+After=network-online.target tank01-can.service
+Wants=network-online.target
+Requires=tank01-can.service
+
+[Service]
+User=@USER@
+Environment=RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+Environment=ROS_DOMAIN_ID=42
+ExecStart=/bin/bash -c 'source /opt/ros/humble/setup.bash && source @REPO@/ros2_ws/install/setup.bash && exec ros2 launch tank01_bringup bringup.launch.py'
+Restart=on-failure
+RestartSec=5
+# The safety supervisor and base bridge get real-time priority via chrt in the launch
+# in a later revision; here we at least raise the whole group.
+Nice=-5
+LimitRTPRIO=90
+
+[Install]
+WantedBy=multi-user.target

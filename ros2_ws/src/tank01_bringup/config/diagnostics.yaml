@@ -1,0 +1,11 @@
+diagnostic_aggregator:
+  ros__parameters:
+    analyzers:
+      base:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: Base
+        contains: ['tank01/base']
+      sensors:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: Sensors
+        contains: ['gnss', 'imu', 'lidar', 'ouster', 'zed']

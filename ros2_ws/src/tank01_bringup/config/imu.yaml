@@ -1,0 +1,16 @@
+# Xsens MTi-630 via xsens_mti_driver
+xsens_driver:
+  ros__parameters:
+    port: /dev/tank01/imu
+    baudrate: 921600
+    frame_id: imu_link
+    pub_imu: true
+    pub_quaternion: true
+    pub_mag: false
+    pub_angular_velocity: true
+    pub_acceleration: true
+    pub_dq: false
+    pub_dv: false
+    pub_temperature: true
+    # Do NOT use magnetometer heading (steel frame + motors). Heading comes from dual GNSS.
+    enable_deviceConfig: false

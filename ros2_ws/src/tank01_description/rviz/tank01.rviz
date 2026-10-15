@@ -1,0 +1,58 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Global Options:
+    Fixed Frame: odom
+    Frame Rate: 30
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 1
+      Plane Cell Count: 40
+    - Class: rviz_default_plugins/RobotModel
+      Name: RobotModel
+      Enabled: true
+      Description Topic:
+        Value: /robot_description
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Show Names: false
+    - Class: rviz_default_plugins/PointCloud2
+      Name: LiDAR
+      Enabled: true
+      Topic:
+        Value: /points
+      Size (m): 0.03
+      Color Transformer: AxisColor
+    - Class: rviz_default_plugins/Map
+      Name: Local Costmap
+      Enabled: true
+      Topic:
+        Value: /local_costmap/costmap
+      Color Scheme: costmap
+    - Class: rviz_default_plugins/Path
+      Name: Coverage Path
+      Enabled: true
+      Topic:
+        Value: /mission/coverage_path
+      Color: 31; 78; 155
+    - Class: rviz_default_plugins/Path
+      Name: Global Plan
+      Enabled: true
+      Topic:
+        Value: /plan
+      Color: 217; 130; 43
+    - Class: rviz_default_plugins/Odometry
+      Name: Odometry (global)
+      Enabled: true
+      Topic:
+        Value: /odometry/global
+      Keep: 50
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 12
+      Target Frame: base_link

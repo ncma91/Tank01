@@ -1,0 +1,20 @@
+# Runs the Tank01 stack on the Jetson. Host networking (DDS, LiDAR, CAN) and devices.
+services:
+  tank01:
+    image: tank01:jetson
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.jetson
+    runtime: nvidia
+    network_mode: host
+    ipc: host
+    privileged: true            # SocketCAN + serial devices; restrict in production
+    restart: unless-stopped
+    volumes:
+      - /dev:/dev
+      - ../ros2_ws/src/tank01_bringup/config:/opt/tank01/ros2_ws/install/share/tank01_bringup/config:ro
+      - ${HOME}/rosbags:/root/rosbags
+      - ${HOME}/.tank01:/root/.tank01
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_DOMAIN_ID=42

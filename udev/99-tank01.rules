@@ -1,0 +1,14 @@
+# Tank01 – stable device names under /dev/tank01/
+# Find serial numbers with:  udevadm info -a -n /dev/ttyACM0 | grep -E 'idVendor|idProduct|serial'
+
+# u-blox ZED-F9P (rover, USB)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1546", ATTRS{idProduct}=="01a9", SYMLINK+="tank01/gnss", MODE="0666"
+
+# Xsens MTi-600 series (USB, FTDI-based)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2639", SYMLINK+="tank01/imu", MODE="0666"
+
+# Teensy 4.1 USB serial (debug console of the base controller)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="0483", SYMLINK+="tank01/teensy", MODE="0666"
+
+# CANable / candleLight USB-CAN adapter (gs_usb) – network interface named can0
+SUBSYSTEM=="net", ACTION=="add", ATTRS{idVendor}=="1d50", ATTRS{idProduct}=="606f", NAME="can0"

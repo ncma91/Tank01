@@ -1,0 +1,19 @@
+# tank01_base/base_node – see docs/02_mechanik.md §2.2 and docs/A_can_protokoll.md
+base_node:
+  ros__parameters:
+    can_interface: can0
+    use_fake_hardware: false
+    track_width: 0.95            # [m] centre to centre of the tracks
+    track_width_factor: 1.5      # chi, effective width = chi * track_width (calibrate!)
+    estimate_slip: false         # online estimate of chi from IMU yaw rate
+    sprocket_radius: 0.105       # [m] pitch radius of the drive sprocket
+    ticks_per_rev: 4096          # 1024 ppr encoder, x4 decoding, on the sprocket shaft
+    invert_left_encoder: false
+    invert_right_encoder: false
+    max_track_speed: 2.2         # [m/s]
+    max_accel: 1.0               # [m/s^2] per track
+    cmd_timeout: 0.25            # [s] no /cmd_vel_safe → stop
+    control_rate: 50.0           # [Hz] CMD_DRIVE rate
+    publish_tf: false            # ekf_local publishes odom → base_link
+    odom_frame: odom
+    base_frame: base_link

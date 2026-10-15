@@ -1,0 +1,22 @@
+# Desktop development image (x86_64): build, unit tests, RViz, fake hardware.
+#   docker build -f docker/Dockerfile.dev -t tank01:dev .
+#   docker run -it --rm --net=host tank01:dev \
+#     ros2 launch tank01_bringup bringup.launch.py fake_hardware:=true use_sensors:=false \
+#       use_nav:=false require_perception:=false
+FROM ros:humble
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3-can python3-pytest python3-colcon-common-extensions \
+      ros-humble-xacro ros-humble-robot-state-publisher ros-humble-robot-localization \
+      ros-humble-twist-mux ros-humble-joy ros-humble-teleop-twist-joy \
+      ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-foxglove-bridge \
+      ros-humble-diagnostic-aggregator ros-humble-rmw-cyclonedds-cpp \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/tank01/ros2_ws
+COPY ros2_ws/src ./src
+RUN . /opt/ros/humble/setup.sh && colcon build --merge-install
+COPY docker/entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]

@@ -1,0 +1,145 @@
+<?xml version="1.0"?>
+<!--
+  Tank01 – tracked autonomous mower.
+  Frames follow REP-103/105: base_link at the centre between the tracks, at sprocket
+  axle height; x forward, y left, z up. All sensor poses are nominal and MUST be
+  replaced by measured / calibrated values (docs/04_sensorik.md, section 5).
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tank01">
+
+  <!-- ===== Parameters ===================================================== -->
+  <xacro:property name="PI" value="3.14159265"/>
+  <xacro:property name="track_width" value="0.95"/>       <!-- centre to centre -->
+  <xacro:property name="track_belt_width" value="0.18"/>
+  <xacro:property name="track_length" value="1.30"/>
+  <xacro:property name="track_height" value="0.40"/>
+  <xacro:property name="sprocket_radius" value="0.105"/>
+  <xacro:property name="axle_height" value="0.20"/>
+  <xacro:property name="chassis_length" value="1.50"/>
+  <xacro:property name="chassis_width" value="0.75"/>
+  <xacro:property name="chassis_height" value="0.45"/>
+  <xacro:property name="mass_total" value="355.0"/>
+
+  <material name="green"><color rgba="0.20 0.45 0.15 1.0"/></material>
+  <material name="black"><color rgba="0.08 0.08 0.08 1.0"/></material>
+  <material name="grey"><color rgba="0.55 0.55 0.55 1.0"/></material>
+  <material name="orange"><color rgba="0.95 0.50 0.05 1.0"/></material>
+
+  <xacro:macro name="box_inertia" params="m x y z">
+    <inertia ixx="${m*(y*y+z*z)/12}" ixy="0" ixz="0"
+             iyy="${m*(x*x+z*z)/12}" iyz="0" izz="${m*(x*x+y*y)/12}"/>
+  </xacro:macro>
+
+  <xacro:macro name="fixed_sensor" params="name parent xyz rpy">
+    <link name="${name}"/>
+    <joint name="${name}_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${name}"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- ===== Base ============================================================ -->
+  <link name="base_footprint"/>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 ${chassis_height/2 - 0.05}"/>
+      <geometry><box size="${chassis_length} ${chassis_width} ${chassis_height}"/></geometry>
+      <material name="green"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${chassis_height/2 - 0.05}"/>
+      <geometry><box size="${chassis_length} ${chassis_width} ${chassis_height}"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0.15"/>
+      <mass value="${mass_total - 2*45 - 65}"/>
+      <xacro:box_inertia m="${mass_total - 2*45 - 65}" x="${chassis_length}"
+                         y="${chassis_width}" z="${chassis_height}"/>
+    </inertial>
+  </link>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${axle_height}"/>
+  </joint>
+
+  <!-- ===== Tracks ========================================================== -->
+  <xacro:macro name="track" params="side reflect">
+    <link name="track_${side}">
+      <visual>
+        <geometry><box size="${track_length} ${track_belt_width} ${track_height}"/></geometry>
+        <material name="black"/>
+      </visual>
+      <collision>
+        <geometry><box size="${track_length} ${track_belt_width} ${track_height}"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="45.0"/>
+        <xacro:box_inertia m="45.0" x="${track_length}" y="${track_belt_width}" z="${track_height}"/>
+      </inertial>
+    </link>
+    <joint name="track_${side}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="track_${side}"/>
+      <origin xyz="0 ${reflect*track_width/2} 0"/>
+    </joint>
+
+    <!-- Rear drive sprocket, position published by base_node via /joint_states -->
+    <link name="sprocket_${side}">
+      <visual>
+        <origin rpy="${PI/2} 0 0"/>
+        <geometry><cylinder radius="${sprocket_radius}" length="${track_belt_width + 0.02}"/></geometry>
+        <material name="grey"/>
+      </visual>
+    </link>
+    <joint name="sprocket_${side}_joint" type="continuous">
+      <parent link="track_${side}"/>
+      <child link="sprocket_${side}"/>
+      <origin xyz="${-track_length/2 + sprocket_radius + 0.05} 0 0.05"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:track side="left" reflect="1"/>
+  <xacro:track side="right" reflect="-1"/>
+
+  <!-- ===== Front-mounted flail mower ======================================= -->
+  <link name="mower_link">
+    <visual>
+      <geometry><box size="0.45 1.15 0.30"/></geometry>
+      <material name="orange"/>
+    </visual>
+    <collision>
+      <geometry><box size="0.45 1.15 0.30"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="65.0"/>
+      <xacro:box_inertia m="65.0" x="0.45" y="1.15" z="0.30"/>
+    </inertial>
+  </link>
+  <joint name="mower_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="mower_link"/>
+    <origin xyz="0.98 0 -0.05"/>
+  </joint>
+
+  <!-- ===== Sensors (nominal poses – calibrate!) ============================ -->
+  <xacro:fixed_sensor name="imu_link"         parent="base_link" xyz="0.0 0.0 0.15"   rpy="0 0 0"/>
+  <xacro:fixed_sensor name="gnss_front"       parent="base_link" xyz="0.60 0.0 0.78"  rpy="0 0 0"/>
+  <xacro:fixed_sensor name="gnss_rear"        parent="base_link" xyz="-0.60 0.0 0.78" rpy="0 0 0"/>
+  <xacro:fixed_sensor name="os_sensor"        parent="base_link" xyz="0.55 0.0 0.95"  rpy="0 0.10 0"/>
+  <xacro:fixed_sensor name="camera_link"      parent="base_link" xyz="0.76 0.0 0.70"  rpy="0 0.20 0"/>
+  <xacro:fixed_sensor name="rear_camera_link" parent="base_link" xyz="-0.78 0.0 0.60" rpy="0 0.25 ${PI}"/>
+
+  <!-- Ultrasonic ring US1..US6 (see docs/04_sensorik.md, section 2) -->
+  <xacro:fixed_sensor name="us1_link" parent="base_link" xyz="1.21 0.30 0.10"   rpy="0 0 0.15"/>
+  <xacro:fixed_sensor name="us2_link" parent="base_link" xyz="1.21 -0.30 0.10"  rpy="0 0 -0.15"/>
+  <xacro:fixed_sensor name="us3_link" parent="base_link" xyz="0.60 -0.58 0.20"  rpy="0 0 ${-PI/2}"/>
+  <xacro:fixed_sensor name="us4_link" parent="base_link" xyz="-0.70 -0.58 0.20" rpy="0 0 ${-PI/2}"/>
+  <xacro:fixed_sensor name="us5_link" parent="base_link" xyz="-0.70 0.58 0.20"  rpy="0 0 ${PI/2}"/>
+  <xacro:fixed_sensor name="us6_link" parent="base_link" xyz="0.60 0.58 0.20"   rpy="0 0 ${PI/2}"/>
+
+</robot>

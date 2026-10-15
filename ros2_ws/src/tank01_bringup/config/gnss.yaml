@@ -1,0 +1,40 @@
+# u-blox ZED-F9P rover (moving-base setup) – KumarRobotics "ublox_gps" driver
+# The moving base (rear receiver) is configured once with u-center and sends RTCM 4072
+# to the rover via UART2; only the rover is connected to the Jetson.
+ublox_gps_node:
+  ros__parameters:
+    device: /dev/tank01/gnss
+    frame_id: gnss_front
+    uart1:
+      baudrate: 460800
+    config_on_startup: false       # receiver configuration is stored in its flash
+    rate: 10.0
+    nav_rate: 1
+    dynamic_model: portable
+    fix_mode: auto
+    tmode3: 0
+    publish:
+      all: false
+      nav:
+        all: false
+        pvt: true
+        relposned: true
+        heading: true              # → navheading (sensor_msgs/Imu, yaw only)
+        status: true
+    rtcm:
+      ids: []
+
+ntrip_client:
+  ros__parameters:
+    # Credentials live in config/secrets.yaml (not in git), see docs/10_kommunikation.md
+    host: "ntrip.example.at"
+    port: 2101
+    mountpoint: "VRS3_MSM"
+    authenticate: true
+    username: ""
+    password: ""
+    ntrip_version: ""
+    rtcm_message_package: "rtcm_msgs"
+    reconnect_attempt_max: 100
+    reconnect_attempt_wait_seconds: 5
+    rtcm_timeout_seconds: 4

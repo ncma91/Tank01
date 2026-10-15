@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python:
+    name: Lint + unit tests (pure Python cores)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]   # 3.10 = ROS 2 Humble / Ubuntu 22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install pytest flake8
+      - run: flake8 --max-line-length=100 ros2_ws/src
+      - run: python -m pytest ros2_ws/src -q
+
+  ros:
+    name: colcon build + test (ROS 2 Humble)
+    runs-on: ubuntu-22.04
+    container: ros:humble
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y python3-can python3-pytest ros-humble-xacro
+      - name: Build
+        shell: bash
+        working-directory: ros2_ws
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --packages-select tank01_description tank01_base tank01_safety tank01_mower tank01_bringup
+      - name: Check URDF
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          xacro ros2_ws/src/tank01_description/urdf/tank01.urdf.xacro > /tmp/tank01.urdf
+      - name: Test
+        shell: bash
+        working-directory: ros2_ws
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon test --packages-select tank01_base tank01_safety tank01_mower
+          colcon test-result --verbose
+
+  firmware:
+    name: Firmware build (Teensy 4.1)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install platformio
+      - run: pio run
+        working-directory: firmware/base_controller

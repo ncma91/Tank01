@@ -1,0 +1,31 @@
+# ROS 2 / colcon
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+.venv/
+
+# PlatformIO
+firmware/**/.pio/
+firmware/**/.vscode/
+
+# Logs, Bags, Karten-Rohdaten
+*.db3
+*.mcap
+rosbags/
+logs/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Geheimnisse (NTRIP-Zugang, LTE, Telemetrie-Token)
+secrets.yaml
+*.env

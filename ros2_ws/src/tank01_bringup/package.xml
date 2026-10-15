@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>tank01_bringup</name>
+  <version>0.1.0</version>
+  <description>Launch files and parameters for the Tank01 autonomous tracked mower.</description>
+  <maintainer email="martin.nachbaur@gmx.at">Martin Nachbaur</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>tank01_description</exec_depend>
+  <exec_depend>tank01_base</exec_depend>
+  <exec_depend>tank01_safety</exec_depend>
+  <exec_depend>tank01_mower</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
+  <exec_depend>twist_mux</exec_depend>
+  <exec_depend>joy</exec_depend>
+  <exec_depend>teleop_twist_joy</exec_depend>
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>nav2_mppi_controller</exec_depend>
+  <exec_depend>nav2_smac_planner</exec_depend>
+  <exec_depend>spatio_temporal_voxel_layer</exec_depend>
+  <exec_depend>foxglove_bridge</exec_depend>
+  <exec_depend>diagnostic_aggregator</exec_depend>
+  <!-- Sensor drivers: install the ones matching your hardware (see docs/04_sensorik.md)
+       ublox_dgnss, ntrip_client, xsens_mti_driver, ouster_ros / livox_ros_driver2,
+       zed_wrapper / depthai_ros, kiss_icp -->
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

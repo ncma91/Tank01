@@ -1,0 +1,243 @@
+{
+ "type": "FeatureCollection",
+ "properties": {
+  "name": "Beispielwiese (fiktiv)",
+  "datum": [
+   47.2601,
+   11.3921,
+   600.0
+  ],
+  "hinweis": "Fiktive Koordinaten zum Testen. Vor Nutzung durch eigene Flächen ersetzen."
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "role": "geofence",
+    "name": "Grundstücksgrenze"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       11.3839091,
+       47.25973995
+      ],
+      [
+       11.39421378,
+       47.25983016
+      ],
+      [
+       11.39434595,
+       47.26117925
+      ],
+      [
+       11.38377678,
+       47.26108903
+      ],
+      [
+       11.3839091,
+       47.25973995
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "role": "field",
+    "name": "Wiese Nord"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       11.3921,
+       47.2601
+      ],
+      [
+       11.39381746,
+       47.26017194
+      ],
+      [
+       11.39392317,
+       47.26072956
+      ],
+      [
+       11.3930248,
+       47.26095442
+      ],
+      [
+       11.39203394,
+       47.2608375
+      ],
+      [
+       11.3921,
+       47.2601
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "role": "keepout",
+    "name": "Teich",
+    "buffer_m": 1.0
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       11.39289268,
+       47.26045975
+      ],
+      [
+       11.39309085,
+       47.26044176
+      ],
+      [
+       11.39315691,
+       47.26054969
+      ],
+      [
+       11.39299837,
+       47.26062164
+      ],
+      [
+       11.39285305,
+       47.26056768
+      ],
+      [
+       11.39289268,
+       47.26045975
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "role": "keepout",
+    "name": "Obstbaum 1",
+    "buffer_m": 1.5
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     11.39249634,
+     47.26036982
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "role": "keepout",
+    "name": "Obstbaum 2",
+    "buffer_m": 1.5
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     11.39348719,
+     47.26063963
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "role": "entry",
+    "name": "Feldeinfahrt"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     11.39206037,
+     47.26045976
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "role": "depot",
+    "name": "Hof / Ladestation"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     11.38417327,
+     47.26009973
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "role": "route",
+    "name": "Feldweg"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      11.38417327,
+      47.26009973
+     ],
+     [
+      11.38615493,
+      47.26023475
+     ],
+     [
+      11.38813663,
+      47.26018987
+     ],
+     [
+      11.3901183,
+      47.26041477
+     ],
+     [
+      11.39157155,
+      47.26045976
+     ],
+     [
+      11.39206037,
+      47.26045976
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "role": "route",
+    "name": "Abkürzung Obstgarten"
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      11.38615493,
+      47.26023475
+     ],
+     [
+      11.38813659,
+      47.2607295
+     ],
+     [
+      11.3901183,
+      47.26041477
+     ]
+    ]
+   }
+  }
+ ]
+}
