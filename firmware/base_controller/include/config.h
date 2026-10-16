@@ -23,6 +23,35 @@ constexpr uint8_t PIN_BUZZER = 25;
 constexpr uint8_t PIN_BRAKE_RELEASE = 26;     // HIGH = release spring brakes (via relay)
 constexpr uint8_t PIN_LED = 13;
 
+// ---- Drive interface ------------------------------------------------------------
+// VESC_CAN: full design (docs/02, docs/03) - VESC motor controllers on CAN2.
+// RC_PWM:   prototype chassis (docs/14) - the Teensy replaces the RC receiver and feeds
+//           servo-style PWM (1000-2000 us) into the chassis motor controller.
+enum class DriveInterface : uint8_t { VESC_CAN, RC_PWM };
+constexpr DriveInterface DRIVE_INTERFACE = DriveInterface::RC_PWM;
+
+// RC_PWM output: ARCADE = CH1 throttle + CH2 steering (typical for chassis remotes),
+//                TANK   = CH1 left track + CH2 right track.
+enum class PwmMixing : uint8_t { ARCADE, TANK };
+constexpr PwmMixing PWM_MIXING = PwmMixing::ARCADE;
+constexpr uint8_t PIN_PWM_CH1 = 28, PIN_PWM_CH2 = 29;
+constexpr uint8_t PIN_PWM_BLADE = 33;         // RC-ESC style blade motor controller
+constexpr uint16_t PWM_NEUTRAL_US = 1500;
+constexpr uint16_t PWM_SPAN_US = 500;         // full scale = neutral +/- span
+constexpr uint16_t PWM_DEADBAND_US = 20;      // controller deadband around neutral
+constexpr float PWM_FULL_SCALE_SPEED = 0.83f; // m/s at full stick (3 km/h) - calibrate!
+constexpr bool PWM_INVERT_CH1 = false, PWM_INVERT_CH2 = false;
+
+// Operator RC receiver -> Teensy (all RC_PWM mode). The receiver outputs are wired to the
+// Teensy instead of the chassis controller: MANUAL = pass-through, AUTO = Jetson commands.
+// A lost RC link stops the vehicle in every mode (dead-man function of the remote).
+constexpr bool RC_INPUT_ENABLED = true;
+constexpr uint8_t PIN_RC_IN_CH1 = 34, PIN_RC_IN_CH2 = 35;   // same meaning as PWM_MIXING
+constexpr uint8_t PIN_RC_IN_MODE = 36;        // switch channel: > RC_AUTO_US = AUTO
+constexpr uint16_t RC_AUTO_US = 1700;
+constexpr uint32_t RC_TIMEOUT_MS = 200;
+constexpr float RC_MANUAL_MAX_SPEED = 0.83f;  // m/s
+
 // ---- CAN --------------------------------------------------------------------
 constexpr uint32_t CAN_BAUD = 500000;
 constexpr uint8_t VESC_ID_LEFT = 10, VESC_ID_RIGHT = 11, VESC_ID_BLADE = 12;

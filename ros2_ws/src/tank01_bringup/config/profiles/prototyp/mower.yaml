@@ -1,0 +1,11 @@
+mission_node:
+  ros__parameters:
+    cut_width: 0.55              # rotary deck
+    overlap: 0.12
+    headland_passes: 2
+    waypoint_spacing: 1.5
+    route_waypoint_spacing: 10.0
+    mow_speed: 0.6
+    blade_rpm: 2600.0            # = full throttle of the blade ESC (firmware MAX_BLADE_RPM)
+    battery_capacity_wh: 3000.0  # 48 V x 70 Ah x 0.9
+    energy_wh_per_m: 0.25        # estimate - refine from logs

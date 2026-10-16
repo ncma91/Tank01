@@ -93,6 +93,10 @@ class BaseNode(Node):
             ('right_joint', 'sprocket_right_joint'),
             ('invert_left_encoder', False),
             ('invert_right_encoder', False),
+            # 'encoders': odometry from the track encoders (recommended)
+            # 'command':  open-loop odometry from the commanded track speeds, for chassis
+            #             without encoders (prototype) - much larger covariance
+            ('odometry_source', 'encoders'),
         ])
         g = self.get_parameter
         self.params = TrackParams(
@@ -111,6 +115,11 @@ class BaseNode(Node):
         self.odom_frame = g('odom_frame').value
         self.base_frame = g('base_frame').value
         self.joint_names = [g('left_joint').value, g('right_joint').value]
+        self.odom_source = g('odometry_source').value
+        if self.odom_source not in ('encoders', 'command'):
+            raise ValueError(f'odometry_source must be encoders|command, not {self.odom_source}')
+        self.cov_scale = 1.0 if self.odom_source == 'encoders' else 25.0
+        self.virtual_ticks = [0.0, 0.0]
         self.enc_sign = (-1 if g('invert_left_encoder').value else 1,
                          -1 if g('invert_right_encoder').value else 1)
 
@@ -186,7 +195,8 @@ class BaseNode(Node):
         if decoded is None:
             return
         if can_id == proto.ENCODERS:
-            self._on_encoders(*decoded)
+            if self.odom_source == 'encoders':
+                self._on_encoders(*decoded)
         elif can_id == proto.STATUS:
             self.status = decoded
             self.pub_estop.publish(Bool(data=decoded.estop))
@@ -244,6 +254,10 @@ class BaseNode(Node):
         left = rate_limit(tl, self.track_out[0], self.params.max_accel, self.dt)
         right = rate_limit(tr, self.track_out[1], self.params.max_accel, self.dt)
         self.track_out = (left, right)
+        if self.odom_source == 'command':
+            for i, speed in enumerate(self.track_out):
+                self.virtual_ticks[i] += speed * self.dt / self.params.metres_per_tick
+            self._on_encoders(int(self.virtual_ticks[0]), int(self.virtual_ticks[1]))
 
         moving = abs(left) > 1e-3 or abs(right) > 1e-3 or abs(tl) > 1e-3 or abs(tr) > 1e-3
         flags = proto.DriveFlag.BEACON
@@ -289,7 +303,7 @@ class BaseNode(Node):
         for i, var in enumerate((0.05, 0.05, 1e3, 1e3, 1e3, 0.2)):
             pose_cov[i * 7] = var
         for i, var in enumerate((0.0025, 0.0025, 1e3, 1e3, 1e3, 0.01 + 0.1 * abs(o.omega))):
-            twist_cov[i * 7] = var
+            twist_cov[i * 7] = var * (self.cov_scale if var < 1e3 else 1.0)
         msg.pose.covariance = pose_cov
         msg.twist.covariance = twist_cov
         self.pub_odom.publish(msg)

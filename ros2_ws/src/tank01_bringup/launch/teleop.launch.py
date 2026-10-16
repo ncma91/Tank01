@@ -12,6 +12,7 @@ def generate_launch_description():
     cfg = os.path.join(get_package_share_directory('tank01_bringup'), 'config', 'teleop.yaml')
     return LaunchDescription([
         DeclareLaunchArgument('use_sim_time', default_value='false'),
+        DeclareLaunchArgument('profile', default_value=''),
         Node(package='joy', executable='joy_node', name='joy_node', parameters=[cfg]),
         Node(package='teleop_twist_joy', executable='teleop_node',
              name='teleop_twist_joy_node', parameters=[cfg],

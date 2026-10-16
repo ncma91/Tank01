@@ -1,0 +1,20 @@
+# Unitree 4D LiDAR L2 – unilidar_sdk2 ROS 2 driver. Check parameter names against the
+# driver version you install (github.com/unitreerobotics/unilidar_sdk2).
+unitree_lidar_ros2_node:
+  ros__parameters:
+    initialize_type: 2             # 1 = serial, 2 = UDP (Ethernet)
+    lidar_ip: "192.168.1.62"
+    local_ip: "192.168.1.2"
+    cloud_frame: "unilidar_lidar"
+    imu_frame: "unilidar_imu"
+    cloud_topic: "unilidar/cloud"
+    imu_topic: "unilidar/imu"
+    range_min: 0.5
+    range_max: 50.0
+
+imu_filter_madgwick:
+  ros__parameters:
+    use_mag: false
+    world_frame: enu
+    publish_tf: false
+    gain: 0.05

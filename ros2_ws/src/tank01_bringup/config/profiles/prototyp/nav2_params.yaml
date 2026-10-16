@@ -1,0 +1,44 @@
+# Nav2 overrides for the prototype: slower, smaller footprint, lighter MPPI for the
+# Jetson Orin Nano (6 cores).
+controller_server:
+  ros__parameters:
+    controller_frequency: 15.0
+    FollowPath:
+      batch_size: 1000
+      time_steps: 40
+      vx_max: 0.80
+      vx_min: -0.30
+      wz_max: 0.80
+      ax_max: 0.5
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      width: 8
+      height: 8
+      # chassis x: -0.63 … +0.63, y: ±0.40; mower deck in front up to x = +1.20
+      footprint: "[[1.20, 0.40], [1.20, -0.40], [-0.63, -0.40], [-0.63, 0.40]]"
+      inflation_layer:
+        inflation_radius: 0.45
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      width: 100
+      height: 100
+      footprint: "[[1.20, 0.40], [1.20, -0.40], [-0.63, -0.40], [-0.63, 0.40]]"
+      inflation_layer:
+        inflation_radius: 0.9
+
+planner_server:
+  ros__parameters:
+    GridBased:
+      minimum_turning_radius: 1.0
+      max_planning_time: 4.0
+
+velocity_smoother:
+  ros__parameters:
+    max_velocity: [0.83, 0.0, 0.8]
+    min_velocity: [-0.3, 0.0, -0.8]
+    max_accel: [0.5, 0.0, 1.0]
+    max_decel: [-1.0, 0.0, -1.5]

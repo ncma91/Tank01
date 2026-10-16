@@ -37,13 +37,14 @@ enum SafetyFlag : uint8_t {
   VESC_TIMEOUT = 1 << 4,
   UNDERVOLTAGE = 1 << 5,
   OVERTEMP     = 1 << 6,
+  RC_LINK_LOST = 1 << 7,
 };
 
 enum DriveFlag : uint8_t { RELEASE_BRAKE = 1 << 0, BEACON = 1 << 1, HORN = 1 << 2 };
 
 enum FaultCode : uint8_t {
   FAULT_NONE = 0, FAULT_WATCHDOG = 1, FAULT_VESC_TIMEOUT = 2, FAULT_ENCODER = 3,
-  FAULT_UNDERVOLTAGE = 4, FAULT_OVERTEMP = 5, FAULT_PRECHARGE = 6,
+  FAULT_UNDERVOLTAGE = 4, FAULT_OVERTEMP = 5, FAULT_PRECHARGE = 6, FAULT_RC_LINK = 7,
 };
 
 #pragma pack(push, 1)

@@ -1,4 +1,7 @@
-"""robot_state_publisher for Tank01 (+ optional RViz)."""
+"""robot_state_publisher for Tank01 (+ optional RViz).
+
+variant:=full | prototyp   (see urdf/tank01.urdf.xacro and docs/14_prototyp.md)
+"""
 
 import os
 
@@ -14,12 +17,15 @@ from launch_ros.parameter_descriptions import ParameterValue
 def generate_launch_description():
     share = get_package_share_directory('tank01_description')
     xacro_file = os.path.join(share, 'urdf', 'tank01.urdf.xacro')
-    robot_description = ParameterValue(Command(['xacro ', xacro_file]), value_type=str)
+    robot_description = ParameterValue(
+        Command(['xacro ', xacro_file, ' variant:=', LaunchConfiguration('variant')]),
+        value_type=str)
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     return LaunchDescription([
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         DeclareLaunchArgument('rviz', default_value='false'),
+        DeclareLaunchArgument('variant', default_value='full'),
         Node(package='robot_state_publisher', executable='robot_state_publisher',
              parameters=[{'robot_description': robot_description,
                           'use_sim_time': ParameterValue(use_sim_time, value_type=bool)}]),

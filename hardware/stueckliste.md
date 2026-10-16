@@ -1,5 +1,7 @@
 # Anhang B – Stückliste (BOM) & Kostenschätzung
 
+> Budget‑Variante für den ersten Prototyp (≤ 3 000 €): siehe [docs/14_prototyp.md](../docs/14_prototyp.md#7-stückliste-und-kosten).
+
 Preise: grobe Richtwerte netto, Stand 2026, ohne Gewähr. Hersteller/Typen sind Beispiele;
 gleichwertige Alternativen sind möglich.
 

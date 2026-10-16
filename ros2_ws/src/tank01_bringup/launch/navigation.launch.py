@@ -5,26 +5,27 @@ goes through twist_mux and the safety supervisor - never directly to the base.
 """
 
 import os
+import sys
 
-from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
+sys.path.insert(0, os.path.dirname(__file__))
+from profile_utils import param_files  # noqa: E402
 
-def generate_launch_description():
-    params = os.path.join(get_package_share_directory('tank01_bringup'), 'config',
-                          'nav2_params.yaml')
+
+def launch_setup(context):
+    params = param_files(LaunchConfiguration('profile').perform(context), 'nav2_params.yaml')
     sim_time = {'use_sim_time': ParameterValue(LaunchConfiguration('use_sim_time'),
                                                value_type=bool)}
-    common = dict(output='screen', parameters=[params, sim_time])
+    common = dict(output='screen', parameters=[*params, sim_time])
     lifecycle_nodes = ['controller_server', 'smoother_server', 'planner_server',
                        'behavior_server', 'bt_navigator', 'waypoint_follower',
                        'velocity_smoother']
-    return LaunchDescription([
-        DeclareLaunchArgument('use_sim_time', default_value='false'),
+    return [
         Node(package='nav2_controller', executable='controller_server',
              remappings=[('cmd_vel', 'cmd_vel_raw')], **common),
         Node(package='nav2_smoother', executable='smoother_server', name='smoother_server',
@@ -45,4 +46,12 @@ def generate_launch_description():
              name='lifecycle_manager_navigation', output='screen',
              parameters=[sim_time, {'autostart': True, 'node_names': lifecycle_nodes,
                                     'bond_timeout': 4.0}]),
+    ]
+
+
+def generate_launch_description():
+    return LaunchDescription([
+        DeclareLaunchArgument('use_sim_time', default_value='false'),
+        DeclareLaunchArgument('profile', default_value=''),
+        OpaqueFunction(function=launch_setup),
     ])

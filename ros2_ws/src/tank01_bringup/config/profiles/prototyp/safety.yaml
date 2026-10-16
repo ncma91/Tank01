@@ -1,0 +1,13 @@
+safety_supervisor:
+  ros__parameters:
+    limits:
+      max_speed: 0.80
+      max_speed_transit: 0.83
+      slow_speed: 0.30
+      max_yaw_rate: 0.8
+      # Data sheet says 45° climbing - with mast, mower and an untested chassis the
+      # prototype is limited much lower until slope tests are done (docs/14, section 7).
+      max_roll_deg: 15.0
+      max_pitch_deg: 20.0
+      warn_roll_deg: 10.0
+      warn_pitch_deg: 15.0

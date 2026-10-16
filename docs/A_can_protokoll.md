@@ -39,10 +39,11 @@
 
 `safety_flags`: Bit0 = Sicherheitskette offen, Bit1 = Neigungsschalter, Bit2 = Mähwerk
 angehoben, Bit3 = Watchdog ausgelöst, Bit4 = VESC‑Timeout, Bit5 = Unterspannung,
-Bit6 = Übertemperatur.
+Bit6 = Übertemperatur, Bit7 = Funkverbindung zur Fernsteuerung verloren (nur RC‑PWM‑Modus).
 
 `fault_code`: 0 = keiner, 1 = Watchdog Jetson, 2 = VESC‑Timeout, 3 = Encoder‑Plausibilität,
-4 = Unterspannung, 5 = Übertemperatur, 6 = Vorladung fehlgeschlagen.
+4 = Unterspannung, 5 = Übertemperatur, 6 = Vorladung fehlgeschlagen,
+7 = Funkverbindung verloren (führt zu STANDBY, nicht zu FAULT).
 
 ## 3. Zeitverhalten & Watchdog
 
@@ -62,7 +63,14 @@ Teensy   ACTIVE ─────────────────────�
 - Grenzen in der Firmware (unabhängig vom Jetson): |Kettengeschwindigkeit| ≤ 2,4 m/s,
   Beschleunigung ≤ 1,5 m/s², Mähwerk ≤ 2600 U/min.
 
-## 4. Teensy ↔ VESC (CAN2)
+## 4. Prototyp: Teensy → Chassis‑Regler (RC‑PWM)
+
+Bei `cfg::DRIVE_INTERFACE = RC_PWM` (Standard für den Prototyp, Kapitel 14) ersetzt der
+Teensy den Fernsteuer‑Empfänger des Chassis: Servo‑Impulse 1000–2000 µs (1500 µs = Stopp)
+auf Pin 28 (CH1) und 29 (CH2), Mähwerk‑ESC auf Pin 33. `vesc_ok_mask` ist in diesem
+Modus immer 0, `MOTOR_*`‑Frames enthalten keine Messwerte.
+
+## 5. Teensy ↔ VESC (CAN2)
 
 Standard‑VESC‑Protokoll (29‑Bit‑Extended‑IDs): `CAN_PACKET_SET_RPM` (ID = 3 << 8 | vesc_id)
 mit ERPM = mech. RPM × Polpaare × Getriebe, Status über `CAN_PACKET_STATUS` (9) und

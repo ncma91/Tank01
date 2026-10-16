@@ -13,6 +13,7 @@
 #include <Arduino.h>
 #include <Encoder.h>
 #include <FlexCAN_T4.h>
+#include <Servo.h>
 #include <string.h>
 
 #include "config.h"
@@ -64,6 +65,97 @@ static inline float clampf(float v, float lo, float hi) { return v < lo ? lo : (
 static float rampTo(float target, float current, float rate, float dt) {
   const float step = rate * dt;
   return current + clampf(target - current, -step, step);
+}
+
+constexpr bool PWM_MODE = cfg::DRIVE_INTERFACE == cfg::DriveInterface::RC_PWM;
+
+// ------------------------------------------------------------- RC receiver input
+// Pulse widths are measured with pin-change interrupts (Teensy 4.1: every pin can).
+struct RcChannel {
+  volatile uint32_t riseUs = 0;
+  volatile uint16_t widthUs = 0;
+  volatile uint32_t lastMs = 0;
+};
+static RcChannel rcCh1, rcCh2, rcMode;
+
+static void rcEdge(RcChannel& ch, uint8_t pin) {
+  const uint32_t now = micros();
+  if (digitalReadFast(pin)) {
+    ch.riseUs = now;
+  } else {
+    const uint32_t w = now - ch.riseUs;
+    if (w >= 800 && w <= 2200) {
+      ch.widthUs = uint16_t(w);
+      ch.lastMs = millis();
+    }
+  }
+}
+static void rcIsr1() { rcEdge(rcCh1, cfg::PIN_RC_IN_CH1); }
+static void rcIsr2() { rcEdge(rcCh2, cfg::PIN_RC_IN_CH2); }
+static void rcIsrMode() { rcEdge(rcMode, cfg::PIN_RC_IN_MODE); }
+
+static bool rcValid(const RcChannel& ch, uint32_t now) {
+  return now - ch.lastMs < cfg::RC_TIMEOUT_MS;
+}
+
+static bool rcLinkOk(uint32_t now) {
+  return !cfg::RC_INPUT_ENABLED || (rcValid(rcCh1, now) && rcValid(rcCh2, now));
+}
+
+// MANUAL = RC link ok and mode switch not in AUTO position
+static bool rcManual(uint32_t now) {
+  return cfg::RC_INPUT_ENABLED && rcLinkOk(now) &&
+         !(rcValid(rcMode, now) && rcMode.widthUs > cfg::RC_AUTO_US);
+}
+
+static float rcNorm(uint16_t us) {
+  const int d = int(us) - int(cfg::PWM_NEUTRAL_US);
+  if (abs(d) < int(cfg::PWM_DEADBAND_US)) return 0.0f;
+  return clampf(float(d) / cfg::PWM_SPAN_US, -1.0f, 1.0f);
+}
+
+// Operator stick positions -> track speed targets (m/s)
+static void rcToTracks(float& left, float& right) {
+  const float a = rcNorm(rcCh1.widthUs) * (cfg::PWM_INVERT_CH1 ? -1.0f : 1.0f);
+  const float b = rcNorm(rcCh2.widthUs) * (cfg::PWM_INVERT_CH2 ? -1.0f : 1.0f);
+  if (cfg::PWM_MIXING == cfg::PwmMixing::ARCADE) {   // a = throttle, b = steering (right +)
+    left = clampf(a + b, -1, 1);
+    right = clampf(a - b, -1, 1);
+  } else {
+    left = a;
+    right = b;
+  }
+  left *= cfg::RC_MANUAL_MAX_SPEED;
+  right *= cfg::RC_MANUAL_MAX_SPEED;
+}
+
+// --------------------------------------------------------------- PWM output
+Servo pwmCh1, pwmCh2, pwmBlade;
+
+static uint16_t toPulse(float norm, bool invert) {
+  if (invert) norm = -norm;
+  return uint16_t(cfg::PWM_NEUTRAL_US + clampf(norm, -1, 1) * cfg::PWM_SPAN_US);
+}
+
+static void pwmSetTracks(float left, float right) {
+  const float l = left / cfg::PWM_FULL_SCALE_SPEED;
+  const float r = right / cfg::PWM_FULL_SCALE_SPEED;
+  float a, b;
+  if (cfg::PWM_MIXING == cfg::PwmMixing::ARCADE) {
+    a = 0.5f * (l + r);   // throttle
+    b = 0.5f * (l - r);   // steering, positive = turn right (left track faster)
+  } else {
+    a = l;
+    b = r;
+  }
+  pwmCh1.writeMicroseconds(toPulse(a, cfg::PWM_INVERT_CH1));
+  pwmCh2.writeMicroseconds(toPulse(b, cfg::PWM_INVERT_CH2));
+}
+
+static void pwmSetBlade(uint16_t rpm) {
+  // RC ESC convention: 1000 us = stop, 2000 us = full speed
+  const float k = clampf(float(rpm) / cfg::MAX_BLADE_RPM, 0, 1);
+  pwmBlade.writeMicroseconds(uint16_t(1000 + 1000 * k));
 }
 
 template <typename T>
@@ -204,14 +296,17 @@ static void readSafetyInputs() {
   if (vLeft.temp_motor > 110 || vRight.temp_motor > 110 || vBlade.temp_motor > 110)
     safetyFlags |= OVERTEMP;
   const uint32_t now = millis();
-  if (state == State::ACTIVE &&
+  if (!rcLinkOk(now)) safetyFlags |= RC_LINK_LOST;
+  if (!PWM_MODE && state == State::ACTIVE &&
       (now - vLeft.last_ms > cfg::VESC_TIMEOUT_MS || now - vRight.last_ms > cfg::VESC_TIMEOUT_MS))
     safetyFlags |= VESC_TIMEOUT;
 }
 
 static void updateState(uint32_t now) {
-  const bool commsOk = hbSeen && (now - lastHeartbeatMs < cfg::WATCHDOG_MS) &&
-                       (now - lastDriveMs < cfg::WATCHDOG_MS);
+  const bool jetsonOk = hbSeen && (now - lastHeartbeatMs < cfg::WATCHDOG_MS) &&
+                        (now - lastDriveMs < cfg::WATCHDOG_MS);
+  // MANUAL (RC pass-through) does not need the Jetson; AUTO needs Jetson AND RC link.
+  const bool commsOk = rcManual(now) || (jetsonOk && rcLinkOk(now));
 
   if (safetyFlags & CHAIN_OPEN) {
     if (state != State::FAULT) state = State::ESTOP;
@@ -229,14 +324,15 @@ static void updateState(uint32_t now) {
       state = State::STANDBY;   // chain closed again (operator acknowledged the relay)
       break;
     case State::STANDBY:
-      if (commsOk && jetsonSafetyState < 4) state = State::ACTIVE;
+      if (commsOk && (rcManual(now) || jetsonSafetyState < 4)) state = State::ACTIVE;
       break;
     case State::ACTIVE:
       if (!commsOk) {
         safetyFlags |= WATCHDOG;
         state = State::RAMP_DOWN;
         rampStartMs = now;
-      } else if (safetyFlags & (TILT_SWITCH | UNDERVOLTAGE | OVERTEMP | VESC_TIMEOUT)) {
+      } else if (safetyFlags & (TILT_SWITCH | UNDERVOLTAGE | OVERTEMP | VESC_TIMEOUT |
+                                RC_LINK_LOST)) {
         state = State::RAMP_DOWN;
         rampStartMs = now;
       }
@@ -245,9 +341,14 @@ static void updateState(uint32_t now) {
       if (now - rampStartMs > cfg::RAMP_DOWN_MS) {
         uint8_t code = FAULT_WATCHDOG;
         if (safetyFlags & VESC_TIMEOUT) code = FAULT_VESC_TIMEOUT;
+        else if (safetyFlags & RC_LINK_LOST) code = FAULT_RC_LINK;
         else if (safetyFlags & UNDERVOLTAGE) code = FAULT_UNDERVOLTAGE;
         else if (safetyFlags & OVERTEMP) code = FAULT_OVERTEMP;
-        enterFault(code);
+        if (code == FAULT_RC_LINK) {
+          state = State::STANDBY;   // out of radio range is expected: stop, but no FAULT
+        } else {
+          enterFault(code);
+        }
       }
       break;
     case State::FAULT:
@@ -258,6 +359,7 @@ static void updateState(uint32_t now) {
 // ----------------------------------------------------------------------- actuators
 static void updateDrive(float dt) {
   float tl = targetLeft, tr = targetRight, rate = cfg::MAX_ACCEL;
+  if (rcManual(millis())) rcToTracks(tl, tr);
   if (state != State::ACTIVE) {
     tl = tr = 0;
     rate = cfg::RAMP_DOWN_DECEL;
@@ -269,7 +371,7 @@ static void updateDrive(float dt) {
 static bool bladeAllowed(uint32_t now) {
   const bool moving = fabsf(outLeft) > 0.05f || fabsf(outRight) > 0.05f;
   if (moving) standstillSinceMs = now;
-  return state == State::ACTIVE && bladeEnableCmd && bladeRpmCmd > 0 &&
+  return state == State::ACTIVE && bladeEnableCmd && bladeRpmCmd > 0 && !rcManual(now) &&
          !(safetyFlags & (MOWER_LIFTED | TILT_SWITCH)) &&
          jetsonSafetyState <= 1 &&                      // OK or SLOW only
          now - standstillSinceMs < cfg::BLADE_IDLE_STOP_MS;
@@ -303,9 +405,9 @@ static void publishStatus() {
   s.state = uint8_t(state);
   s.safety_flags = safetyFlags;
   const uint32_t now = millis();
-  s.vesc_ok_mask = (now - vLeft.last_ms < cfg::VESC_TIMEOUT_MS ? 1 : 0) |
-                   (now - vRight.last_ms < cfg::VESC_TIMEOUT_MS ? 2 : 0) |
-                   (now - vBlade.last_ms < cfg::VESC_TIMEOUT_MS ? 4 : 0);
+  s.vesc_ok_mask = PWM_MODE ? 0 : ((now - vLeft.last_ms < cfg::VESC_TIMEOUT_MS ? 1 : 0) |
+                                    (now - vRight.last_ms < cfg::VESC_TIMEOUT_MS ? 2 : 0) |
+                                    (now - vBlade.last_ms < cfg::VESC_TIMEOUT_MS ? 4 : 0));
   s.fault_code = faultCode;
   const float vbat = analogRead(cfg::PIN_BAT_SENSE) * (3.3f / 1023.0f) * cfg::BAT_DIVIDER;
   s.battery_cv = bmsLastMs ? bms.voltage_cv : uint16_t(vbat * 100);
@@ -334,6 +436,22 @@ void setup() {
   canJetson.setBaudRate(cfg::CAN_BAUD);
   canVesc.begin();
   canVesc.setBaudRate(cfg::CAN_BAUD);
+
+  if (PWM_MODE) {
+    pwmCh1.attach(cfg::PIN_PWM_CH1);
+    pwmCh2.attach(cfg::PIN_PWM_CH2);
+    pwmBlade.attach(cfg::PIN_PWM_BLADE);
+    pwmSetTracks(0, 0);
+    pwmSetBlade(0);
+  }
+  if (cfg::RC_INPUT_ENABLED) {
+    pinMode(cfg::PIN_RC_IN_CH1, INPUT);
+    pinMode(cfg::PIN_RC_IN_CH2, INPUT);
+    pinMode(cfg::PIN_RC_IN_MODE, INPUT);
+    attachInterrupt(digitalPinToInterrupt(cfg::PIN_RC_IN_CH1), rcIsr1, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(cfg::PIN_RC_IN_CH2), rcIsr2, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(cfg::PIN_RC_IN_MODE), rcIsrMode, CHANGE);
+  }
 
   bootMs = millis();
   Serial.println("Tank01 base controller ready");
@@ -367,9 +485,14 @@ void loop() {
   digitalWrite(cfg::PIN_BRAKE_RELEASE, release ? HIGH : LOW);
 
   if (tick % 20 == 0) {                         // 50 Hz motor commands
-    vescSetTrackSpeed(cfg::VESC_ID_LEFT, outLeft, cfg::INVERT_LEFT);
-    vescSetTrackSpeed(cfg::VESC_ID_RIGHT, outRight, cfg::INVERT_RIGHT);
-    vescSetBlade(blade ? bladeRpmCmd : 0);
+    if (PWM_MODE) {
+      pwmSetTracks(outLeft, outRight);
+      pwmSetBlade(blade ? bladeRpmCmd : 0);
+    } else {
+      vescSetTrackSpeed(cfg::VESC_ID_LEFT, outLeft, cfg::INVERT_LEFT);
+      vescSetTrackSpeed(cfg::VESC_ID_RIGHT, outRight, cfg::INVERT_RIGHT);
+      vescSetBlade(blade ? bladeRpmCmd : 0);
+    }
     digitalWrite(cfg::PIN_BLADE_BRAKE, blade ? HIGH : LOW);
   }
   if (tick % 10 == 0) {                         // 100 Hz encoders
@@ -403,8 +526,10 @@ void loop() {
                                                                               : (now % period) < period / 2);
 
   if (tick % 1000 == 0 && Serial) {
-    Serial.printf("state=%u flags=0x%02x fault=%u encL=%ld encR=%ld out=%.2f/%.2f\n",
+    Serial.printf("state=%u flags=0x%02x fault=%u encL=%ld encR=%ld out=%.2f/%.2f "
+                  "rc=%u/%u/%u us manual=%d\n",
                   uint8_t(state), safetyFlags, faultCode, encLeft.read(), encRight.read(),
-                  outLeft, outRight);
+                  outLeft, outRight, rcCh1.widthUs, rcCh2.widthUs, rcMode.widthUs,
+                  int(rcManual(now)));
   }
 }

@@ -18,6 +18,10 @@ mähen und dabei Hindernisse, Menschen und Tiere sicher zu erkennen.
           linke Kette (BLDC 48 V)               rechte Kette (BLDC 48 V)
 ```
 
+> 💡 **Einstieg mit kleinem Budget:** Der [Prototyp v0](docs/14_prototyp.md) nutzt ein
+> fertiges Kettenchassis (48 V, 2 × 1 kW, 3 km/h), Jetson Orin Nano Super, Unitree L2 und
+> UM982 – Ziel ≤ 3 000 €. Start mit `profile:=prototyp`.
+
 ## Kernmerkmale
 
 | Bereich | Lösung |
@@ -45,6 +49,7 @@ Tank01/
 │   ├── tank01_bringup/         Launch‑Dateien & Parameter (Sensoren, EKF, Nav2, twist_mux)
 │   ├── tank01_base/            Kettenkinematik, Odometrie, CAN‑Brücke zum Base‑Controller
 │   ├── tank01_safety/          Sicherheits‑Supervisor, Geofence, Kipp‑/Heartbeat‑Überwachung
+│   ├── tank01_gnss/            Treiber Unicore UM982 (RTK + Dual‑Antennen‑Heading, Prototyp)
 │   └── tank01_mower/           Feldverwaltung, Mähbahnplanung, Missionsablauf, Mähwerk
 ├── docker/                     Container für Jetson (L4T) und Entwicklungs‑PC
 ├── scripts/                    Jetson‑Setup, CAN‑Einrichtung, Hilfsskripte
@@ -70,6 +75,7 @@ Tank01/
 | 11 | [Inbetriebnahme Schritt für Schritt](docs/11_inbetriebnahme.md) |
 | 12 | [Test, Simulation & Validierung](docs/12_test_simulation.md) |
 | 13 | [Wartung & Fehlersuche](docs/13_wartung_fehlersuche.md) |
+| 14 | [**Prototyp v0 (≤ 3 000 €)**](docs/14_prototyp.md) |
 | A | [CAN‑Protokoll Jetson ↔ Base‑Controller](docs/A_can_protokoll.md) |
 | B | [Stückliste (BOM) & Kosten](hardware/stueckliste.md) |
 | C | [Glossar](docs/C_glossar.md) |
@@ -89,6 +95,8 @@ source install/setup.bash
 
 # Gesamtsystem starten (Sensoren, Lokalisierung, Navigation, Sicherheit)
 ros2 launch tank01_bringup bringup.launch.py
+# … bzw. für den Budget-Prototyp (docs/14_prototyp.md)
+ros2 launch tank01_bringup bringup.launch.py profile:=prototyp
 
 # Mähmission für ein Feld starten
 ros2 launch tank01_mower mission.launch.py field:=$(ros2 pkg prefix tank01_bringup)/share/tank01_bringup/missions/beispiel_wiese.geojson

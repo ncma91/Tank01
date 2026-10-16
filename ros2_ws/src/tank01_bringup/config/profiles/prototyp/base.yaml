@@ -1,0 +1,11 @@
+# Prototype chassis 1250x800x410 mm, 2x 1 kW, 48 V, max. 3 km/h, PWM via Teensy
+base_node:
+  ros__parameters:
+    track_width: 0.62            # 800 mm outer width - 180 mm track → MEASURE!
+    track_width_factor: 1.4      # calibrate (docs/11 step 7)
+    sprocket_radius: 0.09        # MEASURE (only relevant with encoders)
+    max_track_speed: 0.83        # 3 km/h
+    max_accel: 0.5
+    # The chassis has no encoders according to the data sheet → open-loop odometry from
+    # commanded speeds until encoders are retrofitted (docs/14, section 5).
+    odometry_source: command

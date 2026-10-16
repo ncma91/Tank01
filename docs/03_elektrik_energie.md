@@ -111,6 +111,9 @@ Siehe `hardware/elektrik/` für Stromlaufpläne (KiCad) und Pinbelegungen.
 | 24 | `BEACON` – Warnleuchte | Aus |
 | 25 | `BUZZER` | Aus |
 | 26 | `BRAKE_RELEASE` – Federspeicherbremsen lüften (Relais, Versorgung hinter Sicherheitsrelais) | Aus |
+| 28 / 29 | `PWM_CH1` / `PWM_CH2` – Servo‑PWM zum Chassis‑Regler (nur Prototyp, Kap. 14) | Aus |
+| 33 | `PWM_BLADE` – Servo‑PWM zum Mähwerk‑ESC (nur Prototyp) | Aus |
+| 34 / 35 / 36 | `RC_IN_CH1` / `RC_IN_CH2` / `RC_IN_MODE` – Fernsteuer‑Empfänger (nur Prototyp) | Ein |
 | 13 | Status‑LED | Aus |
 
 ## 7. EMV & Erdung

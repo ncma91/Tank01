@@ -1,6 +1,10 @@
 # Tank01 – stable device names under /dev/tank01/
 # Find serial numbers with:  udevadm info -a -n /dev/ttyACM0 | grep -E 'idVendor|idProduct|serial'
 
+# Unicore UM982 board (prototype) – most boards use a CH340/CP210x USB-UART; check with
+# udevadm and replace idVendor/idProduct (and add ATTRS{serial}=="..." if ambiguous):
+# SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="tank01/gnss", MODE="0666"
+
 # u-blox ZED-F9P (rover, USB)
 SUBSYSTEM=="tty", ATTRS{idVendor}=="1546", ATTRS{idProduct}=="01a9", SYMLINK+="tank01/gnss", MODE="0666"
 

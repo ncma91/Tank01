@@ -36,10 +36,12 @@ apt-get install -y \
   ros-${ROS_DISTRO}-ublox-gps ros-${ROS_DISTRO}-ntrip-client \
   ros-${ROS_DISTRO}-foxglove-bridge ros-${ROS_DISTRO}-diagnostic-aggregator \
   ros-${ROS_DISTRO}-rmw-cyclonedds-cpp ros-${ROS_DISTRO}-rosbag2-storage-mcap \
-  python3-colcon-common-extensions python3-rosdep python3-can python3-pytest \
+  ros-${ROS_DISTRO}-imu-filter-madgwick \
+  python3-colcon-common-extensions python3-rosdep python3-can python3-serial python3-pytest \
   can-utils chrony gpsd gpsd-clients linuxptp
 # Not in apt for Humble/arm64 – build from source in ros2_ws/src if needed:
 #   ouster-ros, livox_ros_driver2, xsens_mti_driver, kiss-icp, patchwork-plusplus, zed-ros2-wrapper
+#   prototype: unilidar_sdk2 (Unitree L2, github.com/unitreerobotics/unilidar_sdk2)
 
 [[ -f /etc/ros/rosdep/sources.list.d/20-default.list ]] || rosdep init
 sudo -u "$TARGET_USER" rosdep update

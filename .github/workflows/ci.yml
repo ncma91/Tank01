@@ -29,24 +29,25 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y python3-can python3-pytest ros-humble-xacro
+          apt-get install -y python3-can python3-serial python3-pytest ros-humble-xacro
       - name: Build
         shell: bash
         working-directory: ros2_ws
         run: |
           source /opt/ros/humble/setup.bash
-          colcon build --packages-select tank01_description tank01_base tank01_safety tank01_mower tank01_bringup
+          colcon build --packages-select tank01_description tank01_base tank01_safety tank01_mower tank01_gnss tank01_bringup
       - name: Check URDF
         shell: bash
         run: |
           source /opt/ros/humble/setup.bash
           xacro ros2_ws/src/tank01_description/urdf/tank01.urdf.xacro > /tmp/tank01.urdf
+          xacro ros2_ws/src/tank01_description/urdf/tank01.urdf.xacro variant:=prototyp > /tmp/tank01_proto.urdf
       - name: Test
         shell: bash
         working-directory: ros2_ws
         run: |
           source /opt/ros/humble/setup.bash
-          colcon test --packages-select tank01_base tank01_safety tank01_mower
+          colcon test --packages-select tank01_base tank01_safety tank01_mower tank01_gnss
           colcon test-result --verbose
 
   firmware:

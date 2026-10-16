@@ -7,18 +7,30 @@
 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tank01">
 
+  <!-- ===== Variant ========================================================
+       full     : full design (docs/02)
+       prototyp : budget prototype on a 1250x800x410 mm tracked chassis (docs/14) -->
+  <xacro:arg name="variant" default="full"/>
+  <xacro:property name="variant" value="$(arg variant)"/>
+  <xacro:property name="proto" value="${variant == 'prototyp'}"/>
+
   <!-- ===== Parameters ===================================================== -->
   <xacro:property name="PI" value="3.14159265"/>
-  <xacro:property name="track_width" value="0.95"/>       <!-- centre to centre -->
+  <xacro:property name="track_width" value="${0.62 if proto else 0.95}"/>  <!-- centre to centre -->
   <xacro:property name="track_belt_width" value="0.18"/>
-  <xacro:property name="track_length" value="1.30"/>
-  <xacro:property name="track_height" value="0.40"/>
-  <xacro:property name="sprocket_radius" value="0.105"/>
-  <xacro:property name="axle_height" value="0.20"/>
-  <xacro:property name="chassis_length" value="1.50"/>
-  <xacro:property name="chassis_width" value="0.75"/>
-  <xacro:property name="chassis_height" value="0.45"/>
-  <xacro:property name="mass_total" value="355.0"/>
+  <xacro:property name="track_length" value="${1.25 if proto else 1.30}"/>
+  <xacro:property name="track_height" value="${0.36 if proto else 0.40}"/>
+  <xacro:property name="sprocket_radius" value="${0.09 if proto else 0.105}"/>
+  <xacro:property name="axle_height" value="${0.18 if proto else 0.20}"/>
+  <xacro:property name="chassis_length" value="${1.20 if proto else 1.50}"/>
+  <xacro:property name="chassis_width" value="${0.44 if proto else 0.75}"/>
+  <xacro:property name="chassis_height" value="${0.30 if proto else 0.45}"/>
+  <xacro:property name="mass_total" value="${330.0 if proto else 355.0}"/>
+  <xacro:property name="track_mass" value="${40.0 if proto else 45.0}"/>
+  <xacro:property name="mower_mass" value="${25.0 if proto else 65.0}"/>
+  <!-- mower deck: prototype = 0.55 m rotary deck, full = 1.0 m flail mower -->
+  <xacro:property name="mower_x" value="${0.92 if proto else 0.98}"/>
+  <xacro:property name="mower_size" value="${'0.55 0.62 0.20' if proto else '0.45 1.15 0.30'}"/>
 
   <material name="green"><color rgba="0.20 0.45 0.15 1.0"/></material>
   <material name="black"><color rgba="0.08 0.08 0.08 1.0"/></material>
@@ -54,8 +66,8 @@
     </collision>
     <inertial>
       <origin xyz="0 0 0.15"/>
-      <mass value="${mass_total - 2*45 - 65}"/>
-      <xacro:box_inertia m="${mass_total - 2*45 - 65}" x="${chassis_length}"
+      <mass value="${mass_total - 2*track_mass - mower_mass}"/>
+      <xacro:box_inertia m="${mass_total - 2*track_mass - mower_mass}" x="${chassis_length}"
                          y="${chassis_width}" z="${chassis_height}"/>
     </inertial>
   </link>
@@ -77,8 +89,8 @@
         <geometry><box size="${track_length} ${track_belt_width} ${track_height}"/></geometry>
       </collision>
       <inertial>
-        <mass value="45.0"/>
-        <xacro:box_inertia m="45.0" x="${track_length}" y="${track_belt_width}" z="${track_height}"/>
+        <mass value="${track_mass}"/>
+        <xacro:box_inertia m="${track_mass}" x="${track_length}" y="${track_belt_width}" z="${track_height}"/>
       </inertial>
     </link>
     <joint name="track_${side}_joint" type="fixed">
@@ -106,33 +118,42 @@
   <xacro:track side="left" reflect="1"/>
   <xacro:track side="right" reflect="-1"/>
 
-  <!-- ===== Front-mounted flail mower ======================================= -->
+  <!-- ===== Front-mounted mower ============================================= -->
   <link name="mower_link">
     <visual>
-      <geometry><box size="0.45 1.15 0.30"/></geometry>
+      <geometry><box size="${mower_size}"/></geometry>
       <material name="orange"/>
     </visual>
     <collision>
-      <geometry><box size="0.45 1.15 0.30"/></geometry>
+      <geometry><box size="${mower_size}"/></geometry>
     </collision>
     <inertial>
-      <mass value="65.0"/>
-      <xacro:box_inertia m="65.0" x="0.45" y="1.15" z="0.30"/>
+      <mass value="${mower_mass}"/>
+      <inertia ixx="1.0" ixy="0" ixz="0" iyy="1.0" iyz="0" izz="1.0"/>
     </inertial>
   </link>
   <joint name="mower_joint" type="fixed">
     <parent link="base_link"/>
     <child link="mower_link"/>
-    <origin xyz="0.98 0 -0.05"/>
+    <origin xyz="${mower_x} 0 -0.05"/>
   </joint>
 
   <!-- ===== Sensors (nominal poses – calibrate!) ============================ -->
   <xacro:fixed_sensor name="imu_link"         parent="base_link" xyz="0.0 0.0 0.15"   rpy="0 0 0"/>
-  <xacro:fixed_sensor name="gnss_front"       parent="base_link" xyz="0.60 0.0 0.78"  rpy="0 0 0"/>
-  <xacro:fixed_sensor name="gnss_rear"        parent="base_link" xyz="-0.60 0.0 0.78" rpy="0 0 0"/>
-  <xacro:fixed_sensor name="os_sensor"        parent="base_link" xyz="0.55 0.0 0.95"  rpy="0 0.10 0"/>
-  <xacro:fixed_sensor name="camera_link"      parent="base_link" xyz="0.76 0.0 0.70"  rpy="0 0.20 0"/>
+  <xacro:fixed_sensor name="camera_link"      parent="base_link" xyz="${0.60 if proto else 0.76} 0.0 0.70" rpy="0 0.20 0"/>
   <xacro:fixed_sensor name="rear_camera_link" parent="base_link" xyz="-0.78 0.0 0.60" rpy="0 0.25 ${PI}"/>
+  <xacro:if value="${proto}">
+    <!-- UM982: ANT1 = gnss_rear (master), ANT2 = gnss_front → baseline 1.0 m along x -->
+    <xacro:fixed_sensor name="gnss_front"     parent="base_link" xyz="0.50 0.0 0.75"  rpy="0 0 0"/>
+    <xacro:fixed_sensor name="gnss_rear"      parent="base_link" xyz="-0.50 0.0 0.75" rpy="0 0 0"/>
+    <!-- Unitree L2 (frame name of the unilidar_sdk2 driver), mounted level on the mast -->
+    <xacro:fixed_sensor name="unilidar_lidar" parent="base_link" xyz="0.45 0.0 0.90"  rpy="0 0 0"/>
+  </xacro:if>
+  <xacro:unless value="${proto}">
+    <xacro:fixed_sensor name="gnss_front"     parent="base_link" xyz="0.60 0.0 0.78"  rpy="0 0 0"/>
+    <xacro:fixed_sensor name="gnss_rear"      parent="base_link" xyz="-0.60 0.0 0.78" rpy="0 0 0"/>
+    <xacro:fixed_sensor name="os_sensor"      parent="base_link" xyz="0.55 0.0 0.95"  rpy="0 0.10 0"/>
+  </xacro:unless>
 
   <!-- Ultrasonic ring US1..US6 (see docs/04_sensorik.md, section 2) -->
   <xacro:fixed_sensor name="us1_link" parent="base_link" xyz="1.21 0.30 0.10"   rpy="0 0 0.15"/>

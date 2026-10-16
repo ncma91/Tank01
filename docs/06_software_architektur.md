@@ -9,6 +9,11 @@
 | `tank01_base` | ament_python | Kettenkinematik, Odometrie, CAN‑Protokoll und Brücke zum Teensy |
 | `tank01_safety` | ament_python | Safety‑Supervisor (Geschwindigkeits‑Gate, Mähwerk‑Freigabe), Geofence, Kipp/Heartbeat |
 | `tank01_mower` | ament_python | GeoJSON‑Felder, WGS84↔ENU, Mähbahnplanung, Missions‑Zustandsautomat |
+| `tank01_gnss` | ament_python | Treiber Unicore UM982 (GGA/GST/UNIHEADINGA → `/gnss/fix`, `/gnss/heading`) |
+
+**Parameter‑Profile:** `config/profiles/<name>/*.yaml` überschreiben gleichnamige Dateien
+in `config/` (z. B. `profile:=prototyp`, Kapitel 14). Das Profil wählt außerdem URDF‑Variante
+und Sensortreiber (`launch/profile_utils.py`).
 
 Die **Kernlogik** jedes Python‑Pakets (z. B. `kinematics.py`, `coverage.py`, `geofence.py`,
 `safety_logic.py`, `can_protocol.py`) ist **frei von ROS‑Abhängigkeiten** und wird mit

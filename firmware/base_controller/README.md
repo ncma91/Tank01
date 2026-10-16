@@ -10,6 +10,18 @@ Echtzeit‑I/O‑Ebene von Tank01 (siehe [docs/01_systemarchitektur.md](../../do
 | `include/config.h` | Pins, Übersetzungen, Grenzwerte, Zeitkonstanten |
 | `src/main.cpp` | Zustandsautomat, Watchdog, VESC‑Ansteuerung, Encoder, Statusframes |
 
+## Antriebs‑Schnittstelle
+
+In `include/config.h` → `DRIVE_INTERFACE`:
+
+| Wert | Verwendung |
+|---|---|
+| `RC_PWM` (Standard) | **Prototyp** ([docs/14](../../docs/14_prototyp.md)): Servo‑PWM an den Chassis‑Regler, Fernsteuer‑Empfänger am Teensy (MANUAL = Durchreichen, AUTO = Jetson, Funkverlust = Stopp) |
+| `VESC_CAN` | Vollversion: VESC‑Motorregler über CAN2 |
+
+Die seriellen Debug‑Ausgaben zeigen u. a. die gemessenen Empfänger‑Pulsbreiten
+(`rc=…/…/… us`) – damit werden `PWM_NEUTRAL_US`, `PWM_SPAN_US` und `RC_AUTO_US` eingestellt.
+
 ## Bauen & Flashen
 
 ```bash
